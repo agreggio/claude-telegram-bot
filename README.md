@@ -1,8 +1,14 @@
 # Claude Telegram Bot
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Java 21+](https://img.shields.io/badge/Java-21%2B-blue.svg)](https://adoptium.net/)
+[![Spring Boot 3.4.2](https://img.shields.io/badge/Spring%20Boot-3.4.2-green.svg)](https://spring.io/projects/spring-boot)
+
 A Spring Boot application that bridges **Telegram** and **Claude Code CLI**, letting you interact with Claude Code from any Telegram chat.
 
 Send a message → the bot executes `claude -p` locally → returns the response. Conversations are maintained across messages using Claude's session system.
+
+> **Note:** This bot runs Claude Code **locally on your machine**. You need an active [Anthropic API subscription](https://console.anthropic.com/) or [Claude Pro/Max plan](https://claude.ai/) to use Claude Code. API usage is billed according to [Anthropic's pricing](https://www.anthropic.com/pricing).
 
 **[Español](#español)** | **[English](#english)**
 
@@ -157,6 +163,17 @@ ClaudeCodeBot
 | Timeout errors | Increase `CLAUDE_TIMEOUT` in `.env` (complex queries may take longer) |
 | Java version error | Ensure Java 21+ is installed: `java -version` |
 
+### Security
+
+- **Never commit your `.env` file** — it contains your bot token and chat ID
+- The bot restricts access to a single chat ID — only you can interact with it
+- Claude Code runs locally with your system permissions — be mindful of the working directory you set
+- If you suspect your bot token is compromised, revoke it immediately via [@BotFather](https://t.me/BotFather) (`/revoke`)
+
+### Contributing
+
+Contributions are welcome! Please read the [Contributing Guide](CONTRIBUTING.md) before submitting a pull request.
+
 ---
 
 ## Español
@@ -274,6 +291,31 @@ Cualquier otro texto se envia directamente a Claude Code.
 - **Enviar un archivo:** Adjunta un documento o foto, opcionalmente con un caption como `"Revisa este codigo"`
 - **Resetear contexto:** `/new` para comenzar una conversacion nueva
 
+### Arquitectura
+
+```
+Telegram API
+    ↓ (long polling)
+ClaudeCodeBot
+    ├── Verificacion de auth (chatId)
+    ├── Documentos/Fotos → descarga → prompt
+    └── Texto → comando o consulta
+            ↓
+    ClaudeCodeService
+        └── claude -p "prompt" --output-format json [--resume sessionId]
+            ↓
+        Parseo JSON → extrae result + session_id
+            ↓
+        Envia respuesta via Telegram API
+```
+
+### Stack Tecnologico
+
+- **Java 21** + **Spring Boot 3.4.2**
+- **TelegramBots 9.3.0** (long polling)
+- **Jackson** para parseo JSON
+- **Lombok** para reduccion de boilerplate
+
 ### Solucion de problemas
 
 | Problema | Solucion |
@@ -282,6 +324,17 @@ Cualquier otro texto se envia directamente a Claude Code.
 | El bot no responde | Verifica que `TELEGRAM_CHAT_ID` coincida con tu chat ID real |
 | Errores de timeout | Aumenta `CLAUDE_TIMEOUT` en `.env` (consultas complejas pueden tardar mas) |
 | Error de version de Java | Asegurate de tener Java 21+: `java -version` |
+
+### Seguridad
+
+- **Nunca subas tu archivo `.env`** — contiene tu token del bot y chat ID
+- El bot restringe el acceso a un unico chat ID — solo vos podes interactuar con el
+- Claude Code se ejecuta localmente con los permisos de tu sistema — tene cuidado con el directorio de trabajo que configures
+- Si sospechas que tu token fue comprometido, revocalo inmediatamente via [@BotFather](https://t.me/BotFather) (`/revoke`)
+
+### Contribuir
+
+Las contribuciones son bienvenidas! Por favor lee la [Guia de Contribucion](CONTRIBUTING.md) antes de enviar un pull request.
 
 ---
 
